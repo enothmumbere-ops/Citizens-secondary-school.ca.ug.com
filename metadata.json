@@ -1,0 +1,6 @@
+{
+  "name": "Citizens' Secondary School - Kasese (CSS-SIMS)",
+  "description": "Online School Information Management System for Citizens' Secondary School - Kasese. Manages students, teachers, classes, subjects, continuous & summative assessments, attendance, fees, Excel imports, and official report cards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,492 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized system administrator registry entry.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 200 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "grantedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "fullName", "createdAt"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Authenticated user profile and role assignment.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 200 },
+        "displayName": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["admin", "teacher", "student", "pending"], "maxLength": 20 },
+        "status": { "type": "string", "enum": ["active", "inactive", "pending"], "maxLength": 20 },
+        "linkedEntityId": { "type": "string", "maxLength": 128 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "initials": { "type": "string", "maxLength": 16 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "status", "createdAt", "updatedAt"]
+    },
+    "UserInvite": {
+      "title": "UserInvite",
+      "description": "Admin-issued role authorization invite mapped to user email.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["admin", "teacher", "student"], "maxLength": 20 },
+        "linkedEntityId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "initials": { "type": "string", "maxLength": 16 },
+        "status": { "type": "string", "enum": ["pending", "claimed", "revoked"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "role", "fullName", "status", "createdAt", "updatedAt"]
+    },
+    "SchoolSettings": {
+      "title": "SchoolSettings",
+      "description": "Official school identity, term dates, and grading configuration.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "schoolCode": { "type": "string", "maxLength": 32 },
+        "schoolName": { "type": "string", "maxLength": 200 },
+        "motto": { "type": "string", "maxLength": 120 },
+        "address": { "type": "string", "maxLength": 200 },
+        "phones": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 150 },
+        "headTeacherName": { "type": "string", "maxLength": 150 },
+        "bursarName": { "type": "string", "maxLength": 150 },
+        "bursarInitials": { "type": "string", "maxLength": 16 },
+        "currentAcademicYearId": { "type": "string", "maxLength": 128 },
+        "currentTermId": { "type": "string", "maxLength": 128 },
+        "thisTermHas": { "type": "string", "maxLength": 200 },
+        "nextTermBegins": { "type": "string", "maxLength": 120 },
+        "gradingConfig": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolCode", "schoolName", "motto", "address", "phones", "email", "updatedAt"]
+    },
+    "AcademicYear": {
+      "title": "AcademicYear",
+      "description": "Academic year record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "schoolCode": { "type": "string", "maxLength": 32 },
+        "name": { "type": "string", "maxLength": 40 },
+        "isCurrent": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "archived"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolCode", "name", "isCurrent", "status", "createdAt"]
+    },
+    "Term": {
+      "title": "Term",
+      "description": "Academic term within an academic year.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "schoolCode": { "type": "string", "maxLength": 32 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "enum": ["Term I", "Term II", "Term III"], "maxLength": 20 },
+        "startDate": { "type": "string", "maxLength": 40 },
+        "endDate": { "type": "string", "maxLength": 40 },
+        "nextTermBegins": { "type": "string", "maxLength": 40 },
+        "isCurrent": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolCode", "academicYearId", "name", "isCurrent", "createdAt"]
+    },
+    "SchoolClass": {
+      "title": "SchoolClass",
+      "description": "Senior class S.1 through S.6 with streams and class teacher.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "schoolCode": { "type": "string", "maxLength": 32 },
+        "code": { "type": "string", "enum": ["S.1", "S.2", "S.3", "S.4", "S.5", "S.6"], "maxLength": 10 },
+        "name": { "type": "string", "maxLength": 80 },
+        "level": { "type": "string", "enum": ["O-Level", "A-Level"], "maxLength": 20 },
+        "streams": { "type": "array" },
+        "classTeacherId": { "type": "string", "maxLength": 128 },
+        "classTeacherName": { "type": "string", "maxLength": 150 },
+        "classTeacherInitials": { "type": "string", "maxLength": 16 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolCode", "code", "name", "level", "streams", "createdAt"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "Approved academic subject and class availability.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "schoolCode": { "type": "string", "maxLength": 32 },
+        "name": { "type": "string", "maxLength": 100 },
+        "code": { "type": "string", "maxLength": 32 },
+        "allowedClasses": { "type": "array" },
+        "isCompulsory": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolCode", "name", "allowedClasses", "isCompulsory", "createdAt"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Registered teacher profile and assignments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "staffNumber": { "type": "string", "maxLength": 64 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "initials": { "type": "string", "maxLength": 16 },
+        "email": { "type": "string", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "gender": { "type": "string", "enum": ["M", "F"], "maxLength": 8 },
+        "authUid": { "type": "string", "maxLength": 128 },
+        "assignedClasses": { "type": "array" },
+        "assignedSubjects": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "staffNumber", "fullName", "initials", "email", "status", "adminUids", "createdAt", "updatedAt"]
+    },
+    "TeacherAssignment": {
+      "title": "TeacherAssignment",
+      "description": "Links a teacher to a specific class, stream, subject, year, and term.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "teacherUid": { "type": "string", "maxLength": 128 },
+        "teacherName": { "type": "string", "maxLength": 150 },
+        "teacherInitials": { "type": "string", "maxLength": 16 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "subjectId": { "type": "string", "maxLength": 128 },
+        "subjectName": { "type": "string", "maxLength": 100 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "adminUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "teacherName", "classCode", "subjectId", "subjectName", "academicYearId", "termId", "adminUids", "createdAt"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Registered student profile.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentNumber": { "type": "string", "maxLength": 64 },
+        "fullName": { "type": "string", "maxLength": 160 },
+        "gender": { "type": "string", "enum": ["M", "F"], "maxLength": 8 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "dateOfBirth": { "type": "string", "maxLength": 40 },
+        "admissionDate": { "type": "string", "maxLength": 40 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["active", "inactive", "archived", "transferred"], "maxLength": 20 },
+        "authUid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 200 },
+        "studentAuthUid": { "type": "string", "maxLength": 128 },
+        "authorizedTeacherUids": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentNumber", "fullName", "gender", "schoolPayCode", "classCode", "academicYearId", "status", "authorizedTeacherUids", "adminUids", "createdAt", "updatedAt"]
+    },
+    "AssessmentRecord": {
+      "title": "AssessmentRecord",
+      "description": "Subject assessment record for a student in a specific class, term, and year.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 160 },
+        "studentAuthUid": { "type": "string", "maxLength": 128 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "subjectId": { "type": "string", "maxLength": 128 },
+        "subjectName": { "type": "string", "maxLength": 100 },
+        "cumulativeAiScore": { "type": "number" },
+        "identifier": { "type": "number" },
+        "aiDescriptor": { "type": "string", "maxLength": 40 },
+        "formativeScore": { "type": "number" },
+        "summativeScore": { "type": "number" },
+        "totalScore": { "type": "number" },
+        "grade": { "type": "string", "maxLength": 16 },
+        "descriptor": { "type": "string", "maxLength": 60 },
+        "teacherInitials": { "type": "string", "maxLength": 16 },
+        "teacherComment": { "type": "string", "maxLength": 400 },
+        "teacherUid": { "type": "string", "maxLength": 128 },
+        "authorizedTeacherUids": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "status": { "type": "string", "enum": ["draft", "submitted", "approved"], "maxLength": 20 },
+        "approvedBy": { "type": "string", "maxLength": 128 },
+        "sourceImportId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "classCode", "academicYearId", "termId", "subjectId", "subjectName", "status", "authorizedTeacherUids", "adminUids", "createdAt", "updatedAt"]
+    },
+    "StudentTermSummary": {
+      "title": "StudentTermSummary",
+      "description": "Termly student summary, position, comments, and project record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 160 },
+        "gender": { "type": "string", "maxLength": 8 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "studentAuthUid": { "type": "string", "maxLength": 128 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "averageAiIdentifier": { "type": "number" },
+        "averageAiDescriptor": { "type": "string", "maxLength": 40 },
+        "averageTotalScore": { "type": "number" },
+        "averageGrade": { "type": "string", "maxLength": 16 },
+        "averageFinal": { "type": "number" },
+        "level": { "type": "string", "maxLength": 60 },
+        "position": { "type": "string", "maxLength": 32 },
+        "result": { "type": "string", "maxLength": 60 },
+        "classTeacherComment": { "type": "string", "maxLength": 500 },
+        "classTeacherName": { "type": "string", "maxLength": 150 },
+        "classTeacherInitials": { "type": "string", "maxLength": 16 },
+        "bursarComment": { "type": "string", "maxLength": 500 },
+        "bursarName": { "type": "string", "maxLength": 150 },
+        "bursarInitials": { "type": "string", "maxLength": 16 },
+        "headTeacherComment": { "type": "string", "maxLength": 500 },
+        "headTeacherName": { "type": "string", "maxLength": 150 },
+        "projectSubject": { "type": "string", "maxLength": 100 },
+        "projectTitle": { "type": "string", "maxLength": 250 },
+        "projectPhase": { "type": "string", "maxLength": 100 },
+        "projectScore": { "type": "number" },
+        "projectRemarks": { "type": "string", "maxLength": 400 },
+        "projectSupervisor": { "type": "string", "maxLength": 150 },
+        "authorizedTeacherUids": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "status": { "type": "string", "enum": ["draft", "ready", "published"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "classCode", "academicYearId", "termId", "status", "authorizedTeacherUids", "adminUids", "createdAt", "updatedAt"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Daily student attendance record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 160 },
+        "studentAuthUid": { "type": "string", "maxLength": 128 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["present", "absent"], "maxLength": 16 },
+        "recordedByUid": { "type": "string", "maxLength": 128 },
+        "recordedByName": { "type": "string", "maxLength": 150 },
+        "authorizedTeacherUids": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "classCode", "academicYearId", "termId", "date", "status", "recordedByUid", "authorizedTeacherUids", "adminUids", "createdAt"]
+    },
+    "FeesRecord": {
+      "title": "FeesRecord",
+      "description": "Student fees account in UGX for a term.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 160 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "studentAuthUid": { "type": "string", "maxLength": 128 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "feesRequired": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "balance": { "type": "number" },
+        "bursarComment": { "type": "string", "maxLength": 500 },
+        "bursarName": { "type": "string", "maxLength": 150 },
+        "bursarInitials": { "type": "string", "maxLength": 16 },
+        "paymentHistory": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "updatedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "schoolPayCode", "classCode", "academicYearId", "termId", "feesRequired", "amountPaid", "balance", "adminUids", "createdAt", "updatedAt"]
+    },
+    "ReportCard": {
+      "title": "ReportCard",
+      "description": "Generated progressive termly report card snapshot.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 160 },
+        "studentAuthUid": { "type": "string", "maxLength": 128 },
+        "gender": { "type": "string", "maxLength": 8 },
+        "schoolPayCode": { "type": "string", "maxLength": 64 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "academicYearName": { "type": "string", "maxLength": 40 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "termName": { "type": "string", "maxLength": 20 },
+        "subjectResults": { "type": "array" },
+        "attendance": { "type": "object" },
+        "fees": { "type": "object" },
+        "summary": { "type": "object" },
+        "project": { "type": "object" },
+        "thisTermHas": { "type": "string", "maxLength": 200 },
+        "nextTermBegins": { "type": "string", "maxLength": 120 },
+        "published": { "type": "boolean" },
+        "publishedBy": { "type": "string", "maxLength": 128 },
+        "missingFields": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "classCode", "academicYearId", "termId", "subjectResults", "published", "adminUids", "generatedAt", "updatedAt"]
+    },
+    "ExcelImport": {
+      "title": "ExcelImport",
+      "description": "Audit and reference record of imported school Excel workbooks.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fileName": { "type": "string", "maxLength": 200 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "termId": { "type": "string", "maxLength": 128 },
+        "classCode": { "type": "string", "maxLength": 16 },
+        "stream": { "type": "string", "maxLength": 40 },
+        "sheetsFound": { "type": "array" },
+        "rowCount": { "type": "number" },
+        "importedCount": { "type": "number" },
+        "warnings": { "type": "array" },
+        "conflictFlags": { "type": "array" },
+        "rawPreviewRows": { "type": "array" },
+        "uploadedByUid": { "type": "string", "maxLength": 128 },
+        "uploadedByEmail": { "type": "string", "maxLength": 200 },
+        "adminUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "fileName", "academicYearId", "termId", "classCode", "sheetsFound", "rowCount", "importedCount", "uploadedByUid", "adminUids", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable security and academic change audit log.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorUid": { "type": "string", "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 200 },
+        "actorRole": { "type": "string", "maxLength": 32 },
+        "action": { "type": "string", "maxLength": 120 },
+        "entityType": { "type": "string", "maxLength": 64 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "adminUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "actorUid", "actorEmail", "actorRole", "action", "entityType", "entityId", "details", "adminUids", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "System administrator authorization registry."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Authenticated user account profiles and roles."
+    },
+    "/userInvites/{inviteId}": {
+      "schema": { "$ref": "#/entities/UserInvite" },
+      "description": "Admin-managed role invitations keyed by sanitized email."
+    },
+    "/schoolSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/SchoolSettings" },
+      "description": "Official Citizens Secondary School settings and grading rules."
+    },
+    "/academicYears/{yearId}": {
+      "schema": { "$ref": "#/entities/AcademicYear" },
+      "description": "Academic years supported by the school."
+    },
+    "/terms/{termId}": {
+      "schema": { "$ref": "#/entities/Term" },
+      "description": "Academic terms (Term I, II, III) per year."
+    },
+    "/classes/{classId}": {
+      "schema": { "$ref": "#/entities/SchoolClass" },
+      "description": "Senior classes S.1 through S.6 and their streams."
+    },
+    "/subjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/Subject" },
+      "description": "Curriculum subjects and class allocations."
+    },
+    "/teachers/{teacherId}": {
+      "schema": { "$ref": "#/entities/Teacher" },
+      "description": "Registered teaching staff."
+    },
+    "/teacherAssignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/TeacherAssignment" },
+      "description": "Teacher-to-class-and-subject assignments."
+    },
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Student master records."
+    },
+    "/assessmentRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/AssessmentRecord" },
+      "description": "Continuous AI and summative examination scores per student, subject, term, and year."
+    },
+    "/studentTermSummaries/{summaryId}": {
+      "schema": { "$ref": "#/entities/StudentTermSummary" },
+      "description": "Termly student summary, position, comments, and project scores."
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Daily attendance records per student and term."
+    },
+    "/feesRecords/{feeId}": {
+      "schema": { "$ref": "#/entities/FeesRecord" },
+      "description": "Termly student fees balances and bursar comments in UGX."
+    },
+    "/reportCards/{reportId}": {
+      "schema": { "$ref": "#/entities/ReportCard" },
+      "description": "Generated and published progressive termly report cards."
+    },
+    "/excelImports/{importId}": {
+      "schema": { "$ref": "#/entities/ExcelImport" },
+      "description": "Excel workbook import history, warnings, and preserved reference snapshots."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable audit trail of system actions and mark modifications."
+    }
+  }
+}

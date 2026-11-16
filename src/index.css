@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-navy-950: #081628;
+  --color-navy-900: #0F2744;
+  --color-navy-800: #16365E;
+  --color-navy-700: #1E4678;
+  --color-navy-100: #E6EEF7;
+  --color-navy-50: #F2F6FA;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: #0F172A;
+    background-color: #FFFFFF;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .report-card-page {
+    page-break-after: always;
+    break-after: page;
+    box-shadow: none !important;
+    border: 1.5px solid #0F2744 !important;
+  }
+
+  .report-card-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}
+
+/* Student view print protection */
+body.student-no-print {
+  @media print {
+    display: none !important;
+  }
+}
