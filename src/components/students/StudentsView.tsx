@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRightLeft, Edit3, History, Plus, Search, UserCheck, UserX } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRightLeft, Camera, Edit3, History, Plus, Search, Trash2, User, UserCheck, UserX } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchAssessments,
@@ -11,6 +11,60 @@ import {
 import { AssessmentRecord, ClassCode, Gender, Student } from '../../types/sims';
 import { Modal } from '../common/Modal';
 import { useToast } from '../common/Toast';
+
+async function resizePassportPhoto(file: File): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Could not read the selected image file.'));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Invalid image file.'));
+    image.src = dataUrl;
+  });
+
+  const targetW = 180;
+  const targetH = 216;
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Could not process image in browser.');
+  }
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, targetW, targetH);
+
+  // Center-crop cover fit to passport ratio (5:6)
+  const srcRatio = img.width / img.height;
+  const dstRatio = targetW / targetH;
+  let sx = 0;
+  let sy = 0;
+  let sWidth = img.width;
+  let sHeight = img.height;
+  if (srcRatio > dstRatio) {
+    sWidth = img.height * dstRatio;
+    sx = (img.width - sWidth) / 2;
+  } else if (srcRatio < dstRatio) {
+    sHeight = img.width / dstRatio;
+    sy = (img.height - sHeight) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetW, targetH);
+
+  let compressed = canvas.toDataURL('image/jpeg', 0.8);
+  if (compressed.length > 90000) {
+    compressed = canvas.toDataURL('image/jpeg', 0.6);
+  }
+  if (compressed.length > 98000) {
+    throw new Error('Photo is still too large after compression. Please choose a smaller image.');
+  }
+  return compressed;
+}
 
 export const StudentsView: React.FC = () => {
   const { userAccount, classes, years, schoolSettings } = useAuth();
@@ -30,6 +84,7 @@ export const StudentsView: React.FC = () => {
   const [historyStudent, setHistoryStudent] = useState<Student | null>(null);
   const [historyRecords, setHistoryRecords] = useState<AssessmentRecord[]>([]);
   const [saving, setSaving] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<{
     studentNumber: string;
@@ -43,6 +98,7 @@ export const StudentsView: React.FC = () => {
     academicYearId: string;
     status: Student['status'];
     email: string;
+    photoUrl: string;
   }>({
     studentNumber: '',
     fullName: '',
@@ -55,6 +111,7 @@ export const StudentsView: React.FC = () => {
     academicYearId: schoolSettings?.currentAcademicYearId || years[0]?.id || 'yr_2026',
     status: 'active',
     email: '',
+    photoUrl: '',
   });
 
   const loadData = useCallback(async () => {
@@ -102,6 +159,7 @@ export const StudentsView: React.FC = () => {
       academicYearId: schoolSettings?.currentAcademicYearId || years[0]?.id || 'yr_2026',
       status: 'active',
       email: '',
+      photoUrl: '',
     });
     setModalOpen(true);
   };
@@ -120,8 +178,26 @@ export const StudentsView: React.FC = () => {
       academicYearId: st.academicYearId,
       status: st.status,
       email: st.email || '',
+      photoUrl: st.photoUrl || '',
     });
     setModalOpen(true);
+  };
+
+  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (JPEG, PNG, or WebP).', 'error');
+      return;
+    }
+    try {
+      const processed = await resizePassportPhoto(file);
+      setForm((prev) => ({ ...prev, photoUrl: processed }));
+      showToast('Student passport photo added.', 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Could not process student photo.', 'error');
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -270,7 +346,18 @@ export const StudentsView: React.FC = () => {
                 {filtered.map((st) => (
                   <tr key={st.id} className="hover:bg-slate-50/70">
                     <td className="px-5 py-3 font-mono text-xs text-slate-600">{st.studentNumber}</td>
-                    <td className="px-5 py-3 font-semibold text-navy-900">{st.fullName}</td>
+                    <td className="px-5 py-3 font-semibold text-navy-900">
+                      <div className="flex items-center gap-2.5">
+                        {st.photoUrl ? (
+                          <img
+                            src={st.photoUrl}
+                            alt={st.fullName}
+                            className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : null}
+                        <span>{st.fullName}</span>
+                      </div>
+                    </td>
                     <td className="px-5 py-3 text-slate-700">{st.gender}</td>
                     <td className="px-5 py-3 font-mono text-xs text-slate-700">{st.schoolPayCode || '—'}</td>
                     <td className="px-5 py-3 text-slate-700">
@@ -337,6 +424,61 @@ export const StudentsView: React.FC = () => {
         subtitle="Citizens’ Secondary School – Kasese Student Master Record"
       >
         <form onSubmit={handleSave} className="space-y-4">
+          {/* Passport Photo Section at Top of Register New Student Form */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-3.5">
+              <div className="w-[90px] h-[108px] rounded-lg border-2 border-dashed border-slate-300 bg-white flex flex-col items-center justify-center overflow-hidden shrink-0">
+                {form.photoUrl ? (
+                  <img
+                    src={form.photoUrl}
+                    alt="Student passport preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <>
+                    <User className="w-6 h-6 text-slate-400" />
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase mt-1">Passport</span>
+                  </>
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-navy-900">Student Passport Photo</p>
+                <p className="text-[11px] text-slate-500 max-w-xs">
+                  Optional portrait displayed in the top-right corner of the student&apos;s progressive report card.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-navy-900 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 whitespace-nowrap cursor-pointer"
+              >
+                <Camera className="w-4 h-4 text-sky-600" />
+                {form.photoUrl ? 'Change Student photo' : 'Add Student photo'}
+              </button>
+              {form.photoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, photoUrl: '' }))}
+                  className="inline-flex items-center gap-1 px-2.5 py-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 cursor-pointer"
+                  title="Remove photo"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Student ID Number *</label>

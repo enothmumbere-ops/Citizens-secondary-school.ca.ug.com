@@ -625,6 +625,7 @@ export async function saveStudent(
         status: student.status,
         email: (student.email || '').trim().toLowerCase(),
         studentAuthUid: student.studentAuthUid || '',
+        photoUrl: (student.photoUrl || '').slice(0, 100000),
         authorizedTeacherUids,
         adminUids,
         updatedAt: serverTimestamp(),
@@ -635,6 +636,7 @@ export async function saveStudent(
         id,
         stream: student.stream || 'Main',
         email: (student.email || '').trim().toLowerCase(),
+        photoUrl: (student.photoUrl || '').slice(0, 100000),
         authorizedTeacherUids,
         adminUids,
         createdAt: serverTimestamp(),
@@ -987,10 +989,12 @@ export async function saveReportCard(
   try {
     const ref = doc(db, 'reportCards', id);
     const existing = await getDoc(ref);
+    const sanitizedPhotoUrl = (card.photoUrl || '').slice(0, 100000);
     if (existing.exists()) {
       await updateDoc(ref, {
         ...card,
         id,
+        photoUrl: sanitizedPhotoUrl,
         adminUids,
         updatedAt: serverTimestamp(),
       });
@@ -998,6 +1002,7 @@ export async function saveReportCard(
       await setDoc(ref, {
         ...card,
         id,
+        photoUrl: sanitizedPhotoUrl,
         adminUids,
         generatedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

@@ -219,7 +219,7 @@ service cloud.firestore {
 
     function isValidStudent(data) {
       return data.keys().hasAll(['id', 'studentNumber', 'fullName', 'gender', 'schoolPayCode', 'classCode', 'academicYearId', 'status', 'authorizedTeacherUids', 'adminUids', 'createdAt', 'updatedAt']) &&
-        data.keys().hasOnly(['id', 'studentNumber', 'fullName', 'gender', 'schoolPayCode', 'dateOfBirth', 'admissionDate', 'classCode', 'stream', 'academicYearId', 'status', 'authUid', 'email', 'studentAuthUid', 'authorizedTeacherUids', 'adminUids', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'studentNumber', 'fullName', 'gender', 'schoolPayCode', 'dateOfBirth', 'admissionDate', 'classCode', 'stream', 'academicYearId', 'status', 'authUid', 'email', 'studentAuthUid', 'photoUrl', 'authorizedTeacherUids', 'adminUids', 'createdAt', 'updatedAt']) &&
         isValidId(data.id) &&
         data.studentNumber is string && data.studentNumber.size() >= 1 && data.studentNumber.size() <= 64 &&
         data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 160 &&
@@ -234,6 +234,7 @@ service cloud.firestore {
         isOptString(data, 'authUid', 128) &&
         isOptString(data, 'email', 200) &&
         isOptString(data, 'studentAuthUid', 128) &&
+        isOptString(data, 'photoUrl', 100000) &&
         isBoundedList(data.authorizedTeacherUids, 35) &&
         isBoundedList(data.adminUids, 15) &&
         data.createdAt is timestamp &&
@@ -363,11 +364,12 @@ service cloud.firestore {
 
     function isValidReportCard(data) {
       return data.keys().hasAll(['id', 'studentId', 'studentName', 'classCode', 'academicYearId', 'termId', 'subjectResults', 'published', 'adminUids', 'generatedAt', 'updatedAt']) &&
-        data.keys().hasOnly(['id', 'studentId', 'studentName', 'studentAuthUid', 'gender', 'schoolPayCode', 'classCode', 'stream', 'academicYearId', 'academicYearName', 'termId', 'termName', 'subjectResults', 'attendance', 'fees', 'summary', 'project', 'thisTermHas', 'nextTermBegins', 'published', 'publishedBy', 'missingFields', 'adminUids', 'generatedAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'studentId', 'studentName', 'studentAuthUid', 'photoUrl', 'gender', 'schoolPayCode', 'classCode', 'stream', 'academicYearId', 'academicYearName', 'termId', 'termName', 'subjectResults', 'attendance', 'fees', 'summary', 'project', 'thisTermHas', 'nextTermBegins', 'published', 'publishedBy', 'missingFields', 'adminUids', 'generatedAt', 'updatedAt']) &&
         isValidId(data.id) &&
         isValidId(data.studentId) &&
         data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 160 &&
         isOptString(data, 'studentAuthUid', 128) &&
+        isOptString(data, 'photoUrl', 100000) &&
         isOptString(data, 'gender', 8) &&
         isOptString(data, 'schoolPayCode', 64) &&
         data.classCode in ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'] &&
@@ -639,7 +641,7 @@ service cloud.firestore {
         incoming().id == existing().id &&
         incoming().createdAt == existing().createdAt &&
         incoming().updatedAt == request.time &&
-        incoming().diff(existing()).affectedKeys().hasOnly(['studentNumber', 'fullName', 'gender', 'schoolPayCode', 'dateOfBirth', 'admissionDate', 'classCode', 'stream', 'academicYearId', 'status', 'authUid', 'email', 'studentAuthUid', 'authorizedTeacherUids', 'adminUids', 'updatedAt']);
+        incoming().diff(existing()).affectedKeys().hasOnly(['studentNumber', 'fullName', 'gender', 'schoolPayCode', 'dateOfBirth', 'admissionDate', 'classCode', 'stream', 'academicYearId', 'status', 'authUid', 'email', 'studentAuthUid', 'photoUrl', 'authorizedTeacherUids', 'adminUids', 'updatedAt']);
       allow delete: if isAdmin() && isValidId(studentId);
     }
 

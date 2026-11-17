@@ -48,17 +48,27 @@ function renderReportCardPage(
 
   // Header Band
   doc.setFillColor(15, 39, 68);
-  doc.rect(margin, margin, contentWidth, 30, 'F');
+  doc.rect(margin, margin, contentWidth, 35, 'F');
+
+  const photoW = 26;
+  const photoH = 31;
 
   if (logoDataUrl) {
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(margin + 2, margin + 3, 24, 24, 1.5, 1.5, 'F');
-    doc.addImage(logoDataUrl, 'JPEG', margin + 2.8, margin + 3.8, 22.4, 22.4);
+    const logoX = margin + 2;
+    const logoY = margin + 2;
+    const imgW = photoW;
+    const imgH = imgW * (585 / 651);
+    doc.addImage(
+      logoDataUrl,
+      'JPEG',
+      logoX,
+      logoY + (photoH - imgH) / 2,
+      imgW,
+      imgH
+    );
   }
 
-  // Top-right corner: Student Passport Photo Space
-  const photoW = 22;
-  const photoH = 26;
+  // Top-right corner: Student Passport Photo or Placeholder
   const photoX = margin + contentWidth - photoW - 2;
   const photoY = margin + 2;
   doc.setFillColor(255, 255, 255);
@@ -66,51 +76,60 @@ function renderReportCardPage(
   doc.setLineWidth(0.3);
   doc.roundedRect(photoX, photoY, photoW, photoH, 1, 1, 'FD');
 
-  doc.setDrawColor(100, 116, 139);
-  doc.setLineWidth(0.25);
-  doc.setLineDashPattern([1.2, 1.2], 0);
-  doc.rect(photoX + 1.4, photoY + 1.4, photoW - 2.8, photoH - 2.8, 'D');
-  doc.setLineDashPattern([], 0);
+  if (card.photoUrl && card.photoUrl.startsWith('data:image/')) {
+    try {
+      const imgType = card.photoUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(card.photoUrl, imgType, photoX + 0.6, photoY + 0.6, photoW - 1.2, photoH - 1.2);
+    } catch {
+      // Fallback to placeholder if image decoding fails
+    }
+  } else {
+    doc.setDrawColor(100, 116, 139);
+    doc.setLineWidth(0.25);
+    doc.setLineDashPattern([1.2, 1.2], 0);
+    doc.rect(photoX + 1.4, photoY + 1.4, photoW - 2.8, photoH - 2.8, 'D');
+    doc.setLineDashPattern([], 0);
 
-  // Subtle portrait head & shoulders outline inside photo space
-  doc.setDrawColor(148, 163, 184);
-  doc.setLineWidth(0.3);
-  doc.circle(photoX + photoW / 2, photoY + 7.5, 2.7, 'D');
-  doc.roundedRect(photoX + 5.8, photoY + 11, photoW - 11.6, 4.2, 1.5, 1.5, 'D');
+    // Subtle portrait head & shoulders outline inside photo space
+    doc.setDrawColor(148, 163, 184);
+    doc.setLineWidth(0.3);
+    doc.circle(photoX + photoW / 2, photoY + 9, 3.1, 'D');
+    doc.roundedRect(photoX + 7, photoY + 13, photoW - 14, 5, 1.8, 1.8, 'D');
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.2);
-  doc.setTextColor(15, 39, 68);
-  doc.text('STUDENT PHOTO', photoX + photoW / 2, photoY + 19.5, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.4);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Passport Size', photoX + photoW / 2, photoY + 23, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.6);
+    doc.setTextColor(15, 39, 68);
+    doc.text('STUDENT PHOTO', photoX + photoW / 2, photoY + 23, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.8);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Passport Size', photoX + photoW / 2, photoY + 27, { align: 'center' });
+  }
 
   const textCenterX = pageWidth / 2;
 
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text(settings.schoolName.toUpperCase(), textCenterX, margin + 10, { align: 'center' });
+  doc.setFontSize(12.5);
+  doc.text(settings.schoolName.toUpperCase(), textCenterX, margin + 12, { align: 'center' });
 
   doc.setFontSize(8.8);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(125, 211, 252);
-  doc.text(`Motto: "${settings.motto}"`, textCenterX, margin + 16, { align: 'center' });
+  doc.text(`Motto: "${settings.motto}"`, textCenterX, margin + 18.5, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.4);
+  doc.setFontSize(7.2);
   doc.setTextColor(226, 232, 240);
   doc.text(
     `${settings.address}  |  Tel: ${settings.phones}  |  Email: ${settings.email}`,
     textCenterX,
-    margin + 22.5,
+    margin + 25,
     { align: 'center' }
   );
 
   // Sub-heading
-  let y = margin + 35;
+  let y = margin + 40;
   doc.setTextColor(15, 39, 68);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -194,8 +213,8 @@ function renderReportCardPage(
     body: tableBody,
     theme: 'grid',
     styles: {
-      fontSize: 7.5,
-      cellPadding: 1.8,
+      fontSize: 7.4,
+      cellPadding: 1.55,
       lineColor: [203, 213, 225],
       lineWidth: 0.2,
       textColor: [15, 23, 42],

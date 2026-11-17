@@ -197,6 +197,7 @@ export const ReportCardsView: React.FC = () => {
         studentId: st.id,
         studentName: st.fullName,
         studentAuthUid: st.studentAuthUid || '',
+        photoUrl: st.photoUrl || '',
         gender: st.gender,
         schoolPayCode: st.schoolPayCode,
         classCode: st.classCode,
@@ -379,10 +380,14 @@ export const ReportCardsView: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                if (previewCards.length === 1) {
-                  void downloadSingleReportCardPdf(previewCards[0], defaultSettings, subjects);
+                const withPhotos = previewCards.map((c) => ({
+                  ...c,
+                  photoUrl: c.photoUrl || students.find((s) => s.id === c.studentId)?.photoUrl || '',
+                }));
+                if (withPhotos.length === 1) {
+                  void downloadSingleReportCardPdf(withPhotos[0], defaultSettings, subjects);
                 } else {
-                  void downloadBulkReportCardsPdf(previewCards, defaultSettings, `${selectedClass}_${currentTermName}`, subjects);
+                  void downloadBulkReportCardsPdf(withPhotos, defaultSettings, `${selectedClass}_${currentTermName}`, subjects);
                 }
               }}
               className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-navy-900 hover:bg-navy-800 rounded-lg cursor-pointer"
@@ -564,8 +569,11 @@ export const ReportCardsView: React.FC = () => {
               {/* Official Citizens' Secondary School Report Card Sheet */}
               <article className="report-card-page bg-white border-2 border-navy-900 rounded-lg p-6 sm:p-8 text-slate-900">
                 {/* Official School Header */}
-                <header className="grid grid-cols-[68px_1fr_82px] sm:grid-cols-[84px_1fr_92px] items-center gap-3 sm:gap-4 pb-4 border-b-2 border-navy-900">
-                  <SchoolCrest size={76} className="shrink-0 mx-auto" />
+                <header className="grid grid-cols-[96px_1fr_96px] sm:grid-cols-[110px_1fr_110px] items-center gap-3 sm:gap-4 pb-4 border-b-2 border-navy-900">
+                  <SchoolCrest
+                    fitContainer
+                    className="w-[96px] h-[116px] sm:w-[110px] sm:h-[132px]"
+                  />
                   <div className="text-center min-w-0">
                     <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-navy-900 uppercase">
                       {defaultSettings.schoolName}
@@ -577,20 +585,40 @@ export const ReportCardsView: React.FC = () => {
                       {defaultSettings.address} · Tel: {defaultSettings.phones} · Email: {defaultSettings.email}
                     </p>
                   </div>
-                  <div
-                    aria-label="Student passport photo space"
-                    className="w-[82px] h-[98px] sm:w-[92px] sm:h-[110px] border-2 border-dashed border-navy-900/60 bg-slate-50/70 rounded flex flex-col items-center justify-center text-center p-1.5 shrink-0 ml-auto select-none"
-                  >
-                    <div className="w-8 h-8 rounded-full border border-slate-300 bg-white flex items-center justify-center mb-1">
-                      <User className="w-4 h-4 text-slate-400" />
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-navy-900 leading-tight">
-                      Student Photo
-                    </span>
-                    <span className="text-[8px] text-slate-500 leading-tight mt-0.5">
-                      Passport Size
-                    </span>
-                  </div>
+                  {(() => {
+                    const photoSrc =
+                      card.photoUrl || students.find((s) => s.id === card.studentId)?.photoUrl || '';
+                    if (photoSrc) {
+                      return (
+                        <div
+                          aria-label={`${card.studentName} passport photo`}
+                          className="w-[96px] h-[116px] sm:w-[110px] sm:h-[132px] border-2 border-navy-900 rounded overflow-hidden bg-white shrink-0 ml-auto"
+                        >
+                          <img
+                            src={photoSrc}
+                            alt={card.studentName}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div
+                        aria-label="Student passport photo space"
+                        className="w-[96px] h-[116px] sm:w-[110px] sm:h-[132px] border-2 border-dashed border-navy-900/60 bg-slate-50/70 rounded flex flex-col items-center justify-center text-center p-2 shrink-0 ml-auto select-none"
+                      >
+                        <div className="w-9 h-9 rounded-full border border-slate-300 bg-white flex items-center justify-center mb-1.5">
+                          <User className="w-5 h-5 text-slate-400" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-navy-900 leading-tight">
+                          Student Photo
+                        </span>
+                        <span className="text-[9px] text-slate-500 leading-tight mt-0.5">
+                          Passport Size
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </header>
 
                 <div className="py-2.5 text-center border-b border-slate-300 bg-navy-900 text-white my-3 rounded-sm">

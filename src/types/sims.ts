@@ -169,6 +169,7 @@ export interface Student {
   authUid?: string;
   email?: string;
   studentAuthUid?: string;
+  photoUrl?: string;
   authorizedTeacherUids: string[];
   adminUids: string[];
   createdAt?: unknown;
@@ -316,6 +317,7 @@ export interface ReportCard {
   studentId: string;
   studentName: string;
   studentAuthUid?: string;
+  photoUrl?: string;
   gender?: Gender;
   schoolPayCode?: string;
   classCode: ClassCode;

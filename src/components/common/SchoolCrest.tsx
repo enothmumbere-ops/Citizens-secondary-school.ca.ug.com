@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 
 interface SchoolCrestProps {
   size?: number;
+  fitContainer?: boolean;
   className?: string;
 }
 
 export const SCHOOL_LOGO_URL = '/assets/aistudio/Citizens_s.s_a01937a3.jpg';
 
-export const SchoolCrest: React.FC<SchoolCrestProps> = ({ size = 48, className = '' }) => {
+export const SchoolCrest: React.FC<SchoolCrestProps> = ({ size = 48, fitContainer = false, className = '' }) => {
   const [imgFailed, setImgFailed] = useState(false);
 
   if (!imgFailed) {
     return (
       <div
-        style={{ width: size, height: size }}
+        style={fitContainer ? undefined : { width: size, height: size }}
         className={`bg-white rounded-lg p-0.5 flex items-center justify-center overflow-hidden shrink-0 ${className}`}
       >
         <img
